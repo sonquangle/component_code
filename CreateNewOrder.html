@@ -1,0 +1,328 @@
+<html lang="en" layout:decorate="~{fragments/layout.html}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<link href="/css/select2.min.css" rel="stylesheet" />
+	<title>Tạo mã giảm giá mới</title>
+	<link rel="stylesheet" type="text/css" href="/css/formSQL.css">
+</head>
+
+<body>
+	<th:block layout:fragment="content">
+		<div id="page-content">
+			<div class="container coupons display-flex" style="padding-left: 0;">
+				<div class="col-lg-4 container-order--left">
+					<div id="header-color" class="display-flex font-size-head align-head-bank">
+						<span>
+							<i class="fa fa-barcode fa-lg" aria-hidden="true"></i>
+							&nbsp;Quét Barcode
+						</span>
+						<label class="switch" onclick="barcode()"> <input id="bar-check" type="checkbox"> <span
+								class="slider round"></span>
+						</label>
+					</div>
+					<div>
+						<input type="text" id="myInput" onkeyup="myFunctionsearch()"
+							placeholder="Search for names/SKU..">
+						<div class="order-left--item">
+							<ul id="myUL">
+								<li class="display-flex align-search--order" th:each="product : ${products}">
+									<img id="avatar-item" class="logo-link"
+										th:src=" ${@environment.getProperty('apiImage')} + ${product.getProductDto().getImageThumbnail()}">
+									<div class="flex-row">
+										<label id="label-product-id" th:utext="${product.productDto.productId}"
+											hidden="hidden"></label>
+										<label id="label-item-name" th:utext="${product.productDto.name}"></label>
+										<label class="order--SKU">SKU:
+											<span id="label-item-SKU" th:utext="${product.productDto.sku}">
+											</span>
+										</label>
+										<span>Số lượng:
+											<span id="label-item-stock"
+												th:style="${product.productDto.qty}>0? '' : 'color:red'"
+												th:utext="${product.productDto.qty}>0? ${product.productDto.qty} : 'Hết Hàng'">
+											</span>
+										</span>
+										<span id="label-item-price"
+											th:style="${product.productDto.price != product.productDto.priceNew} ? 'text-decoration: line-through;color:#ccc;font-size:15px;' : ''"
+											th:value="${product.productDto.price}" th:utext="${#numbers.formatDecimal(product.productDto.price, 0, 'POINT', 0, 'POINT')}+'đ'"></span>
+										<span th:if="${product.productDto.price}!=${product.productDto.priceNew}" id="label-item-priceNew" th:value="${product.productDto.priceNew}" 	th:utext="${#numbers.formatDecimal(product.productDto.priceNew, 0, 'POINT', 0, 'POINT')}+'đ'" ></span>
+									</div></li>
+								</ul>
+							</div>
+						</div>
+					</div>
+
+
+					<div class="col-lg-8 container-order--right">
+						<div class="font-size-head align-head-bank">
+							<h4 class="tile">
+								<strong>Tạo Đơn Hàng</strong>
+							</h4>
+						</div>
+						<div id="createnode" class="font-size-body form-order--main">
+						 
+						</div>
+						<div id="UlTotal">
+						<div class="form-row form-order form-payment">
+							<div class="form-order-01"></div>
+							<div class="form-order-04 flex-row">
+								<p id="align-total">
+									<strong>Tổng cộng :</strong>
+								</p>
+							</div>
+							<div class="form-order-02">
+								<p id="final-payment" class="total-payment">0đ</p>
+							</div>
+							<div class="form-order-03"><button class="button-noborder--red btn-align--order" type="button" onclick="showConfirmDelete()"><i class="fa fa-trash"aria-hidden="true" style="padding-bottom:10px"></i></button></div>
+							<div class="form-order-05 flex-row" style="float: none;"></div>
+						</div>
+					</div>
+						<button class="button-withdrawal btn-withdrawal--blue btn-align--submit" data-toggle="modal" data-target="#bill-modal" type="button" onclick="createBill()">Đồng
+							ý</button>
+						<div id="order-modal" class="modal" role="dialog">						
+							<div id="modal-order" class="modal-dialog">
+								<div class="modal-content">
+									<div id="modal-main" class="modal-header form-modal-attribute">
+										<button type="button" class="close" data-dismiss="modal">&times;</button>
+										<h4 id="modal-main" class="modal-title"><i class="fa fa-google-wallet" aria-hidden="true"></i>
+											Chọn Thuộc Tính</h4>
+									</div>
+									<div id="modal-main" class="modal-body">
+										<ul id="orderUL">
+
+										</ul>
+									</div>
+									<div class="modal-footer">
+									 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+									</div> 
+								</div> 
+							</div>								
+						</div>
+
+
+						<div id="bill-modal" class="modal" role="dialog">						
+							<div id="modal-bill" class="modal-dialog">
+								<div class="modal-content">
+									<div  id="modal-main" class="modal-header form-modal-main">
+										<button type="button" class="close" data-dismiss="modal">&times;</button>
+										<h4 id="modal-main" class="modal-title">Hóa Đơn Thanh Toán</h4>
+									</div>
+									<div id="modal-main" class="modal-body modal-bill--align">
+										<ul id="billUL">
+										</ul>
+									</div>
+									<div class="modal-footer">
+										<div id="billUL-Footer" class="font-size-body">
+											<div class="flex-row">
+												<p class="price-origin">ABC</p>											
+											<div id="modal-total"></div>
+												<div id="shipper_info" class="form-deliver">
+													<div class="display-flex flexItem" style="padding-bottom:0">
+														<p class="label-left">
+															<i class="fa fa-truck" style="color:red" aria-hidden="true"></i>
+															Giao hàng
+														</p>
+														<span onclick="shipper()" style="color: #2196F3;">Chọn địa chỉ ship hàng</span>
+													</div>
+												</div>
+													<div id="customer_info" class="display-flex flexItem" style="display:none">
+															<p class="label-left"><i class="fa fa-user-plus" style="color: #2196F3" aria-hidden="true"></i> Khách hàng</p>
+													  	<div class="display-flex" style="align-items: center;cursor: pointer;"onclick="activeModal2nd()">
+															<label id="customer-name--id" style="padding-left:20px"></label>
+															<div class="flex-row" style="padding-left:20px">
+																<p id="customer-name--receive">Điền thông tin khách hàng</p>
+																<p id="customer-phone--receive">tại đây</p>
+															</div>
+														</div>
+														<div>
+															<span style="padding-left:20px;color:red;cursor:pointer" onclick="shipperBack()">Trở lại</div>
+														</div>
+														
+															<div id="customer_info_fee" class="display-flex flexItem" style="padding-bottom:0;display: none;">
+																<p class="label-left"><i class="fa fa-truck" style="color: red" aria-hidden="true"></i>
+																	Chọn ĐVVC
+																</p>
+																<div id="dvvc" class="flex-row" style="text-align: left;">
+																	
+																</div>
+															</div>
+													
+													</div>
+													<div class="display-flex flexItem">
+														<p class="label-left"><i class="fa fa-ticket" style="color: orange" aria-hidden="true"></i> Mã Giảm Giá</p>
+													  	<div class="recap-form">
+															<input id="confirm-voucher" type="text"
+																class="form-control login-width label-right"  style="width: 250px">
+															<button class="button-none-default btn-none-voucher" onclick="addVoucher()" >Áp dụng
+															</button>
+														</div>
+													</div>
+													<div class="display-flex flexItem">
+														<p class="label-left"><i class="fa fa-money" style="color: greenyellow" aria-hidden="true"></i> Phương thức</p>
+														<select onchange="triggleFieldset()" name="orderDocstatus" class="form-control" id="orderDocstatus" style="width: 250px">
+																<option value="CASH" selected ><i class="fa fa-money" aria-hidden="true"></i>
+																	Tiền Mặt</option>																
+																<option value="CASH-ON-DELIVERY" ><i class="fa fa-handshake-o" aria-hidden="true"></i>
+																	Thanh Toán Khi Nhận Hàng</option>
+														</select>
+													</div>
+													<fieldset class="nopadding">
+													<div class="display-flex flexItem nopadding">
+														<p class="label-left"></p>
+														<div class="display-flex flexItem nopadding">
+															<p class="label-left">Khách đưa : </p>
+															<input id="receiveMoney" onkeyup="changeMoney()" type="text" style="width: 100px" placeholder="" class="form-control form-deliver-detail label-right">
+														</div>
+													</div>	
+													<div class="display-flex flexItem ">
+														<p class="label-left"></p>
+														<div class="display-flex flexItem nopadding">
+															<p class="label-left">Trả lại : </p>
+															<p id="changeMoney" class="label-right"></p>
+														</div>
+													</div>	
+												</fieldset>													
+											</div>
+											<button class="button-withdrawal btn-withdrawal--blue btn-align--submit" data-toggle="modal" data-target="#bill-modal" type="button" onclick="showToast()">Xác nhận</button>
+										</div>
+										
+									</div> 
+								</div> 
+							</div>								
+						</div>
+						<div id="customer-modal" class="modal" role="dialog">						
+							<div id="modal-bill" class="modal-dialog">
+								<div class="modal-content">
+									<div  id="modal-main" class="modal-header modal-align--customer">
+										<button type="button" class="close" data-dismiss="modal">&times;</button>
+										<h4 id="modal-main" class="modal-title"><i class="fa fa-info" aria-hidden="true"></i>
+											Thông Tin Khách Hàng</h4>
+									</div>
+									<div id="modal-main" class="modal-body modal-color--customer">
+
+										<ul class="nav nav-tabs title-small-mb-01">
+											<li id="gtsp"><a data-toggle="tab" href="#home" class="active">Thông tin khách hàng</a></li>
+											<!-- <li id="ts" class="hidden-mb"><a data-toggle="tab" href="#menu1">Tạo mới khách hàng</a></li> -->
+										</ul>
+										<div class="tab-content" style="margin: 10px 15px">
+											<div id="home" class="tab-pane title-small-mb-01 active">
+												<div class="font-size-body">
+
+												<div class="display-flex flexItem">
+													<p class="label-left">Chọn quốc gia</p>													
+															<select id="vietnam" class=" label-right" style="width: 300px;">
+																<option value="2">Chọn Quốc Gia</option>
+															</select>	
+												</div>
+												<div class="display-flex flexItem">
+													<p class="label-left">Tỉnh/thành phố</p>
+													<select id="select_city" class=" label-right" style="width: 300px;">
+														<option >Chọn Tỉnh/thành phố</option>
+														
+													</select>	
+												</div>
+												<div class="display-flex flexItem">
+													<p class="label-left">TP/quận huyện </p>
+													<select id="select_district" class=" label-right" style="width: 300px;">
+														<option >Chọn TP/quận huyện</option>
+
+													</select>	
+												</div>
+												<div class="display-flex flexItem">
+													<p class="label-left">Xã/phường</p>
+													<select id="select_village" class=" label-right" style="width: 300px;">
+														<option >Chọn Xã/phường</option>
+														  
+													</select>	
+												</div>	
+												<div class="display-flex flexItem">
+													<p class="label-left">Họ và Tên</p>
+														<input  id="customer-name" type="text" 	class="form-control login-width label-right"  style="width: 300px"onkeyup="check_name(this.id)">		
+												</div>
+												<div id="name-result" class="display-flex flexItem" style="color: red;display: none;padding:0 0 0 150px">
+													<span class="label-right" id="confirm-result--name" ></span>
+												</div>
+												<div class="display-flex flexItem">
+													<p class="label-left">Số điện thoại</p>
+														<input  id="customer-phone" type="text" 
+															class="form-control login-width label-right"  style="width: 300px" onkeyup="check_confirm(this.id)">		
+												</div>
+												<div id="phone-result" class="display-flex flexItem"style="color: red;display: none;padding:0 0 0 150px">
+													<span class="label-right" id="confirm-result--phone" ></span>
+												</div>
+												<div class="display-flex flexItem">
+													<p class="label-left">Địa chỉ giao hàng cụ thể </p>
+													<textarea id="customer_note"class="form-control pb-chat-textarea" style="resize:vertical;width:300px;max-height: 250px;" placeholder="Địa chỉ người nhận , tối thiểu 10 ký tự và tối đa 1000 ký tự"></textarea>
+												</div>													
+												</div>
+
+											</div>
+											<!-- <div id="menu1" class="tab-pane thongso-chitiet">
+												<div class="font-size-body">
+													<p style="text-align: left;padding-left:20px;font-size: 20px;cursor: pointer;">Thông tin chi tiết</p>
+													<div class="display-flex flexItem">
+														<p class="label-left">Họ và Tên</p>
+															<input  id="customer-name" type="text" 
+																class="form-control login-width label-right"  style="width: 300px">		
+													</div>
+													<div class="display-flex flexItem">
+														<p class="label-left">Số điện thoại</p>
+															<input  id="customer-phone" type="text" 
+																class="form-control login-width label-right"  style="width: 300px" onkeyup="check_confirm(this.id)">		
+													</div>
+													
+
+													<div class="display-flex flexItem">
+														<p class="label-left">Địa chỉ Email</p>
+															<input  id="customer-email" type="text" onkeyup="check_mail(this.id)"
+																class="form-control login-width label-right"  style="width: 300px">	
+													</div>	
+													<div id="email-result" class="display-flex flexItem"style="color: red;display: none;padding-left:150px">
+														<p class="label-left"></p>
+														<p class="label-right" id="confirm-result--email" ></p>
+													</div>												
+													<p style="text-align: left;padding-left:20px;font-size: 20px;cursor: pointer;">Địa chỉ Ship Hàng</p>
+													<div class="display-flex flexItem">
+														<p class="label-left"></p>
+															<input id="confirm" type="text" 
+																class="form-control login-width label-right"  style="width: 300px">		
+													</div>
+													<div class="display-flex flexItem">
+														<p class="label-left"></p>
+															<input id="confirm" type="text" 
+																class="form-control login-width label-right"  style="width: 300px">		
+													</div>
+												</div>
+											</div>															 -->
+										</div>
+									</div>
+									<div class="modal-footer">
+										<button id="confirm-create" class="button-withdrawal btn-withdrawal--blue btn-align--submit" type="button"  onclick="createCustomer()">Xác nhận</button>
+										<button class="button-withdrawal btn-withdrawal--red btn-align--submit" type="button" onclick="backCustomer()">Trở Lại</button>
+
+									</div> 
+								</div> 
+							</div>								
+						</div>
+					</div>
+				</div>
+			</div>
+	</th:block>
+	<th:block layout:fragment="script">
+		<script src="/js/component.js" type="text/javascript"></script>
+		<script src="/js/orderCreate.js" type="text/javascript"></script>
+		<script src="/js/select2.min.js" type="text/javascript"></script>
+		<script src="/js/select2.js" type="text/javascript"></script>
+		<script>
+			$(document).ready(function () {
+				checkPerm("P_ORDER_C");
+
+				$('.js-example-basic-single').select2();
+			})
+		</script>
+	</th:block>
+</body>
+
+</html>
